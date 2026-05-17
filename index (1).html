@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Portal SST – GTC 45</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f7;--surf:#fff;--surf2:#f6f7fb;--bord:#e4e8f0;
+  --txt:#111827;--mut:#6b7280;
+  --blue:#1d4ed8;--blue-l:#eff6ff;--blue-d:#1e40af;
+  --red:#dc2626;--red-l:#fef2f2;
+  --green:#059669;--green-l:#ecfdf5;
+  --amb:#d97706;--amb-l:#fffbeb;
+  --r:13px;--rs:8px;
+  --sh:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.04);
+  --shl:0 8px 32px rgba(0,0,0,.15)
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:99px}
+button{cursor:pointer;border:none;background:none;font-family:inherit;font-size:inherit}
+input,select,textarea{font-family:inherit;font-size:inherit}
+img{display:block;max-width:100%}
+
+/* ── LAYOUT ──────────────────────────── */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{
+  width:228px;flex-shrink:0;background:var(--surf);
+  border-right:1px solid var(--bord);
+  display:flex;flex-direction:column;z-index:50
+}
+.logo{padding:20px 18px 14px;border-bottom:1px solid var(--bord)}
+.logo h1{font-size:15px;font-weight:900;color:var(--blue);letter-spacing:-.3px}
+.logo p{font-size:11px;color:var(--mut);margin-top:2px;font-weight:500}
+.nav{padding:10px 8px;flex:1;display:flex;flex-direction:column;gap:2px}
+.ni{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:var(--rs);
+  font-size:13.5px;font-weight:500;color:var(--mut);cursor:pointer;
+  transition:all .12s;user-select:none}
+.ni:hover{background:var(--surf2);color:var(--txt)}
+.ni.on{background:var(--blue-l);color:var(--blue);font-weight:700}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{
+  background:var(--surf);border-bottom:1px solid var(--bord);
+  padding:12px 22px;display:flex;align-items:center;
+  justify-content:space-between;flex-shrink:0
+}
+.topbar h2{font-size:16px;font-weight:800;letter-spacing:-.3px}
+.content{flex:1;overflow-y:auto;padding:22px}
+
+/* ── CARDS ───────────────────────────── */
+.card{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:18px;box-shadow:var(--sh)}
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.slbl{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
+.sval{font-size:28px;font-weight:900;letter-spacing:-1px;margin-top:3px}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.ctitle{font-size:13px;font-weight:700;margin-bottom:12px}
+
+/* ── BUTTONS ─────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;
+  border-radius:var(--rs);font-weight:700;font-size:13px;
+  transition:all .12s;cursor:pointer;border:none;line-height:1}
+.bp{background:var(--blue);color:#fff}
+.bp:hover{background:var(--blue-d)}
+.bo{background:transparent;color:var(--txt);border:1.5px solid var(--bord)}
+.bo:hover{border-color:#9ca3af}
+.bsm{padding:5px 10px;font-size:12px;border-radius:6px}
+.btn:disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+
+/* ── TABLE ───────────────────────────── */
+.twrap{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.tbar{padding:12px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--bord)}
+table{width:100%;border-collapse:collapse}
+thead th{padding:9px 14px;text-align:left;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.5px;color:var(--mut);
+  background:var(--surf2);border-bottom:1px solid var(--bord);white-space:nowrap}
+tbody tr{cursor:pointer;transition:background .1s}
+tbody tr:hover{background:var(--surf2)}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--bord);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+.acts{display:flex;gap:4px;opacity:0;transition:opacity .1s}
+tbody tr:hover .acts{opacity:1}
+
+/* ── BADGES ──────────────────────────── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;
+  border-radius:99px;font-size:11px;font-weight:700;white-space:nowrap;line-height:1.6}
+.bopen{background:#f1f5f9;color:#475569}
+.bprog{background:#fef9c3;color:#a16207}
+.bdone{background:#dcfce7;color:#16a34a}
+.bri{background:#fee2e2;color:#b91c1c}
+.brii{background:#ffedd5;color:#c2410c}
+.briii{background:#fef9c3;color:#a16207}
+.briv{background:#dcfce7;color:#15803d}
+
+/* ── SEARCH / FILTER ─────────────────── */
+.sw{position:relative;flex:1;min-width:160px}
+.sw input{width:100%;padding:7px 10px 7px 30px;border:1.5px solid var(--bord);
+  border-radius:var(--rs);outline:none;transition:border-color .15s;background:var(--surf);font-size:13px}
+.sw input:focus{border-color:var(--blue)}
+.sico{position:absolute;left:9px;top:50%;transform:translateY(-50%);
+  color:var(--mut);pointer-events:none;font-size:13px}
+select.fil{padding:7px 10px;border:1.5px solid var(--bord);border-radius:var(--rs);
+  background:var(--surf);outline:none;font-size:13px;color:var(--txt);cursor:pointer}
+select.fil:focus{border-color:var(--blue)}
+
+/* ── MODAL ───────────────────────────── */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
+  display:flex;align-items:flex-start;justify-content:center;
+  padding:24px 14px;overflow-y:auto}
+.modal{background:var(--surf);border-radius:18px;width:100%;max-width:660px;
+  box-shadow:var(--shl);animation:su .18s ease;flex-shrink:0;margin:auto}
+@keyframes su{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
+.mhd{padding:20px 24px 15px;border-bottom:1px solid var(--bord);
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.mhd h3{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.mhd p{font-size:12.5px;color:var(--mut);margin-top:3px}
+.mbody{padding:20px 24px;display:flex;flex-direction:column;gap:14px;
+  max-height:66vh;overflow-y:auto}
+.mft{padding:14px 24px;border-top:1px solid var(--bord);display:flex;gap:8px;justify-content:flex-end}
+.xbtn{width:30px;height:30px;border-radius:99px;background:var(--surf2);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:background .12s;font-size:14px;color:var(--mut);cursor:pointer}
+.xbtn:hover{background:var(--bord)}
+
+/* ── FORM ────────────────────────────── */
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:11px;font-weight:700;color:var(--mut);
+  text-transform:uppercase;letter-spacing:.4px}
+.fg input,.fg select,.fg textarea{
+  padding:8px 11px;border:1.5px solid var(--bord);
+  border-radius:var(--rs);outline:none;
+  transition:border-color .15s,background .15s;
+  background:var(--surf);color:var(--txt);width:100%}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--blue)}
+.fg textarea{resize:vertical;min-height:66px}
+.aif{border-color:#34d399!important;background:#f0fdf4!important}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+
+/* ── IMAGE UPLOAD ────────────────────── */
+.idrop{border:2px dashed var(--bord);border-radius:var(--r);padding:16px;
+  text-align:center;cursor:pointer;transition:all .15s;
+  position:relative;overflow:hidden;min-height:80px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.idrop:hover{border-color:var(--blue);background:var(--blue-l)}
+.idrop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.idrop p{color:var(--mut);font-size:12.5px;pointer-events:none;margin:0}
+.iprev{width:100%;max-height:175px;object-fit:cover;border-radius:var(--rs);margin-top:8px}
+
+/* ── AI BOX ──────────────────────────── */
+.aibox{background:linear-gradient(135deg,#eff6ff,#f0fdf4);
+  border:1.5px solid #bfdbfe;border-radius:var(--r);padding:12px 14px}
+.aibox-t{font-size:11.5px;font-weight:800;color:var(--blue);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.aibox p{font-size:12.5px;color:#374151}
+
+/* ── API KEY INLINE ──────────────────── */
+.keybox{background:#fffbeb;border:1.5px solid #fcd34d;border-radius:var(--rs);padding:12px 14px}
+.keybox label{font-size:11px;font-weight:700;color:#92400e;
+  text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px}
+.keybox input{width:100%;padding:7px 10px;border:1.5px solid #fcd34d;border-radius:6px;
+  background:#fff;outline:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--txt)}
+.keybox input:focus{border-color:var(--amb)}
+.keybox p{font-size:11.5px;color:#92400e;margin-top:5px;line-height:1.5}
+
+/* ── ALERTS ──────────────────────────── */
+.ale{padding:9px 13px;border-radius:var(--rs);font-size:12.5px;
+  font-weight:600;display:flex;align-items:center;gap:7px}
+.ale-e{background:var(--red-l);border:1px solid #fca5a5;color:#b91c1c}
+.ale-crit{background:var(--red-l);border:1.5px solid #fca5a5;
+  border-radius:10px;padding:11px 15px;font-size:13px;font-weight:600;
+  color:var(--red);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* ── SPINNER ─────────────────────────── */
+@keyframes spin{to{transform:rotate(360deg)}}
+.sp{width:13px;height:13px;border:2px solid rgba(255,255,255,.35);
+  border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;flex-shrink:0}
+
+/* ── TOAST ───────────────────────────── */
+.toast{position:fixed;bottom:20px;right:20px;background:#111827;color:#fff;
+  padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;
+  z-index:999;animation:su .2s ease;box-shadow:var(--shl);max-width:280px}
+.tok{background:var(--green)}
+.terr{background:var(--red)}
+
+/* ── DETAIL ──────────────────────────── */
+.dp{display:flex;flex-direction:column;gap:3px}
+.dp .dl{font-size:10.5px;font-weight:700;color:var(--mut);
+  text-transform:uppercase;letter-spacing:.4px}
+.dp .dv{font-size:13.5px;font-weight:600}
+.actbox{background:var(--green-l);border:1px solid #a7f3d0;border-radius:11px;padding:14px 16px}
+.actbox .al{font-size:10.5px;font-weight:700;color:var(--green);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.actbox p{font-size:13.5px;font-weight:600;color:#065f46;line-height:1.55}
+
+/* ── CHART (pure CSS bars) ───────────── */
+.barchart{display:flex;align-items:flex-end;gap:8px;height:150px;padding:0 2px}
+.bg{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0}
+.bbar{border-radius:5px 5px 0 0;width:100%;min-height:3px;transition:opacity .15s}
+.bbar:hover{opacity:.75}
+.blbl{font-size:10px;color:var(--mut);font-weight:600;
+  text-align:center;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;width:100%;max-width:56px}
+.bval{font-size:11px;font-weight:800;color:var(--txt)}
+
+/* ── PIE LEGEND ──────────────────────── */
+.plgd{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.prow{display:flex;align-items:center;gap:8px;font-size:13px}
+.pdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.pname{flex:1;color:var(--mut);font-size:12.5px}
+.pnum{font-weight:900;color:var(--txt)}
+.pbar-wrap{display:flex;gap:4px;margin-top:12px;border-radius:5px;overflow:hidden;height:16px}
+.pbar-seg{transition:flex .3s}
+
+/* ── EMPTY ───────────────────────────── */
+.empty{text-align:center;padding:40px 20px;color:var(--mut)}
+.empty .eico{font-size:38px;margin-bottom:10px}
+.empty h3{font-size:15px;font-weight:700;color:var(--txt);margin-bottom:5px}
+.empty p{font-size:13px}
+
+/* ── ABOUT ───────────────────────────── */
+.acard{background:var(--surf);border:1px solid var(--bord);border-radius:var(--r);padding:22px;max-width:520px;box-shadow:var(--sh)}
+.info-box{background:var(--blue-l);border:1px solid #bfdbfe;border-radius:9px;padding:14px;font-size:12.5px;color:#1e40af;line-height:1.65}
+
+/* ── MOBILE ──────────────────────────── */
+.menbtn{display:none}
+.sbdrop{display:none}
+@media(max-width:800px){
+  .sidebar{position:fixed;left:-228px;top:0;bottom:0;
+    transition:left .22s;box-shadow:var(--shl)}
+  .sidebar.open{left:0}
+  .sbdrop{display:block;position:fixed;inset:0;
+    background:rgba(0,0,0,.42);z-index:49}
+  .menbtn{display:flex}
+  .sgrid{grid-template-columns:1fr 1fr}
+  .cgrid{grid-template-columns:1fr}
+  .content{padding:14px}
+  .fgrid{grid-template-columns:1fr}
+  .modal{max-width:100%;border-radius:14px}
+  .tbar{gap:6px}
+}
+
+/* mono font */
+.mono{font-family:'DM Mono',monospace}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sb">
+    <div class="logo">
+      <h1>🛡️ Portal SST</h1>
+      <p>GTC 45 · Colombia</p>
+    </div>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn bo bsm menbtn" onclick="toggleSb()">☰</button>
+        <h2 id="ptitle">Dashboard</h2>
+      </div>
+      <div id="tbact"></div>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<!-- MODAL & TOAST CONTAINERS -->
+<div id="mroot"></div>
+<div id="troot"></div>
+
+<script>
+/* ============================================================
+   CONSTANTES
+============================================================ */
+const DEPS=['Gerencia','Logística','Administración','Garantias','Comercial','Gestión Humana','Bodega','Operaciones','SST'];
+const RFACTORS=['Biomecánico','Psicosocial','Físico','Químico','Biológico','Seguridad','Fenómenos Naturales'];
+const SUBS={
+  'Biológico':['Virus','Bacterias','Hongos','Ricketsias','Parásitos','Picaduras','Mordeduras','Fluidos o excrementos'],
+  'Físico':['Ruido','Iluminación','Vibración','Temperaturas extremas','Presión atmosférica','Radiaciones ionizantes','Radiaciones no ionizantes'],
+  'Químico':['Polvos orgánicos e inorgánicos','Fibras','Líquidos','Gases y vapores','Humos metálicos y no metálicos','Material particulado'],
+  'Psicosocial':['Gestión organizacional','Características de la organización','Características del grupo social de trabajo','Condiciones de la tarea','Interfase persona-tarea','Jornada de trabajo'],
+  'Biomecánico':['Posturas (prolongada, mantenida, forzada, antigravitacional)','Esfuerzo','Movimiento repetitivo','Manipulación manual de cargas'],
+  'Seguridad':['Mecánico','Eléctrico','Locativo','Tecnológico','Accidentes de tránsito','Públicos','Trabajo en alturas','Espacios confinados'],
+  'Fenómenos Naturales':['Sismo','Terremoto','Inundación','Derrumbe','Precipitaciones (lluvias, granizadas, heladas)']
+};
+const PROB=[{l:'Muy Alto (MA)',v:'Muy Alto',s:40},{l:'Alto (A)',v:'Alto',s:20},{l:'Medio (M)',v:'Medio',s:8},{l:'Bajo (B)',v:'Bajo',s:4}];
+const CONS=[{l:'Catastrófico (I)',v:'Catastrófico',s:100},{l:'Peligroso (II)',v:'Peligroso',s:60},{l:'Leve (III)',v:'Leve',s:25},{l:'Marginal (IV)',v:'Marginal',s:10}];
+const INTS=['Eliminación','Sustitución','Controles Ingeniería','Controles Administrativos','EPP'];
+const BCOLORS=['#1d4ed8','#059669','#d97706','#dc2626','#7c3aed','#0891b2','#db2777'];
+const PCOLS={RI:'#dc2626',RII:'#d97706',RIII:'#ca8a04',RIV:'#059669'};
+const PLBLS={RI:'R-I Alto',RII:'R-II Medio',RIII:'R-III Bajo',RIV:'R-IV Mínimo'};
+const NAV=[{id:'dashboard',ico:'📊',lbl:'Dashboard'},{id:'findings',ico:'📋',lbl:'Hallazgos'},{id:'about',ico:'ℹ️',lbl:'Acerca de'}];
+
+const SEED=[
+  {id:'H1',date:'2026-03-23',time:'09:00',city:'Bogotá',area:'Bodega 6 - Almacenamiento',department:'Logística',responsible:'Responsable SST',riskFactor:'Seguridad',riskDetail:'Locativo',description:'Se evidencia estabilidad en el sistema de almacenamiento implementado (Res. 2400 de 1979).',probabilityLevel:'Bajo',consequenceLevel:'Leve',intervention:'Controles Administrativos',action:'Garantizar que el almacenamiento mantenga condiciones de estabilidad y seguridad permanentemente.',complianceDate:'2026-03-23',status:'Completed',priority:'RIII'},
+  {id:'H2',date:'2026-03-23',time:'09:15',city:'Bogotá',area:'Bodega 6',department:'Logística',responsible:'Responsable SST',riskFactor:'Seguridad',riskDetail:'Eléctrico',description:'Apagado preventivo de luminarias. Riesgo por contacto de cartón con luminarias industriales tipo campana.',probabilityLevel:'Medio',consequenceLevel:'Peligroso',intervention:'Controles Administrativos',action:'Evitar obstrucción de ventilación de equipos eléctricos y mantener distancia de materiales combustibles (Art 214 Res. 2400).',complianceDate:'2026-04-30',status:'In Progress',priority:'RII'},
+  {id:'H3',date:'2026-03-23',time:'09:45',city:'Bogotá',area:'Bodega 6 - Escalera',department:'Logística',responsible:'Responsable SST',riskFactor:'Seguridad',riskDetail:'Locativo',description:'Escalera al segundo piso presenta inestabilidad (vaivén) por zapatas no ancladas. Incumple NSR-10 y Res. 4272.',probabilityLevel:'Muy Alto',consequenceLevel:'Peligroso',intervention:'Controles Ingeniería',action:'Realizar anclaje mecánico de zapatas con pernos de expansión y verificar nivelación estructural.',complianceDate:'2026-04-30',status:'Open',priority:'RI'},
+  {id:'H4',date:'2026-03-23',time:'10:00',city:'Bogotá',area:'Bodega 6',department:'Logística',responsible:'Analista SST',riskFactor:'Biológico',riskDetail:'Fluidos o excrementos',description:'Presencia de excremento de roedor identificado en áreas de la bodega.',probabilityLevel:'Medio',consequenceLevel:'Leve',intervention:'Controles Administrativos',action:'Ejecutar jornada de orden, aseo y refuerzo de programa de control de plagas (fumigación).',complianceDate:'2026-03-23',status:'Completed',priority:'RIII'},
+  {id:'H5',date:'2026-03-23',time:'10:30',city:'Bogotá',area:'Bodega 6 - Pasillo',department:'Logística',responsible:'Responsable SST',riskFactor:'Físico',riskDetail:'Iluminación',description:'Fallas en iluminación del pasillo. Incumple Art. 79-87 Res. 2400 sobre iluminación suficiente y uniforme.',probabilityLevel:'Medio',consequenceLevel:'Leve',intervention:'Controles Administrativos',action:'Reemplazo de luminarias defectuosas y mejora de niveles lumínicos en el pasillo.',complianceDate:'2026-03-23',status:'Completed',priority:'RIII'},
+  {id:'H6',date:'2026-03-23',time:'11:00',city:'Bogotá',area:'Bodega 6 - Cargas Altura',department:'Operaciones',responsible:'Analista SST',riskFactor:'Seguridad',riskDetail:'Trabajo en alturas',description:'Manipulación de cargas en altura >2.0m sin protección contra caídas. Riesgo crítico según Res. 4272 de 2021.',probabilityLevel:'Muy Alto',consequenceLevel:'Catastrófico',intervention:'Controles Administrativos',action:'Implementar Programa de Trabajo Seguro en Alturas, uso de arnés y eslingas, capacitación obligatoria.',complianceDate:'2026-03-23',status:'Open',priority:'RI'},
+  {id:'H7',date:'2026-03-23',time:'11:30',city:'Bogotá',area:'Bodega 6 - General',department:'SST',responsible:'Responsable SST',riskFactor:'Seguridad',riskDetail:'Locativo',description:'Señalización de evacuación retirada o desprendida en varias zonas. Incumple NSR-10.',probabilityLevel:'Bajo',consequenceLevel:'Marginal',intervention:'Controles Administrativos',action:'Reposición y reinstalación de señales de evacuación de manera continua y visible.',complianceDate:'2026-03-23',status:'In Progress',priority:'RIII'},
+  {id:'H8',date:'2026-03-23',time:'12:00',city:'Bogotá',area:'Administración - 2do/3er Piso',department:'Administración',responsible:'Analista SST',riskFactor:'Seguridad',riskDetail:'Locativo',description:'Áreas administrativas con equipos electrónicos y servidores sin detectores de humo (NSR-10 y Dec. 1072).',probabilityLevel:'Medio',consequenceLevel:'Peligroso',intervention:'Controles Administrativos',action:'Instalación de sistema de detección fotoeléctrica en racks de servidores y oficinas administrativas.',complianceDate:'2026-04-30',status:'Open',priority:'RII'},
+  {id:'H9',date:'2026-03-24',time:'10:15',city:'Bogotá',area:'Producción A',department:'Operaciones',responsible:'Analista SST',riskFactor:'Biomecánico',riskDetail:'Manipulación manual de cargas',description:'Personal realiza levantamiento de cargas superiores a 25 kg sin ayuda mecánica ni capacitación.',probabilityLevel:'Alto',consequenceLevel:'Peligroso',intervention:'Controles Ingeniería',action:'Adquirir estibadores manuales o eléctricos y capacitar al personal en manejo seguro de cargas.',complianceDate:'2026-04-15',status:'Open',priority:'RI'}
+];
+
+/* ============================================================
+   ESTADO
+============================================================ */
+var ST={
+  tab:'dashboard',
+  findings:loadF(),
+  search:'',
+  fStatus:'',
+  fPriority:'',
+  sbOpen:false
+};
+
+function loadF(){
+  try{var s=localStorage.getItem('sst_f');return s?JSON.parse(s):SEED;}catch(e){return SEED;}
+}
+function saveF(){localStorage.setItem('sst_f',JSON.stringify(ST.findings));}
+function getKey(){return localStorage.getItem('sst_key')||'';}
+function setKey(k){localStorage.setItem('sst_key',k);}
+
+/* ============================================================
+   UTILS
+============================================================ */
+function esc(s){
+  return String(s||'').replace(/[&<>"']/g,function(c){
+    return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function today(){return new Date().toISOString().split('T')[0];}
+function nowTime(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+function daysPlus(n){return new Date(Date.now()+n*864e5).toISOString().split('T')[0];}
+function calcPri(p,c){
+  var ps=({' Muy Alto':40,'Muy Alto':40,'Alto':20,'Medio':8,'Bajo':4})[p]||(PROB.find(function(l){return l.v===p;})||{s:0}).s;
+  var cs=(CONS.find(function(l){return l.v===c;})||{s:0}).s;
+  var sc=ps*cs;
+  if(sc>=600)return'RI';if(sc>=150)return'RII';if(sc>=40)return'RIII';return'RIV';
+}
+function sbadge(s){
+  var m={Completed:['bdone','✓ Ejecutado'],'In Progress':['bprog','⏳ En Proceso'],Open:['bopen','○ Abierto']};
+  var r=m[s]||m.Open;
+  return'<span class="badge '+r[0]+'">'+r[1]+'</span>';
+}
+function pbadge(p){
+  var m={RI:['bri','R-I Alto'],RII:['brii','R-II Medio'],RIII:['briii','R-III Bajo'],RIV:['briv','R-IV Mín.']};
+  var r=m[p]||m.RIII;
+  return'<span class="badge '+r[0]+'">'+r[1]+'</span>';
+}
+function groupBy(arr,k){
+  var m={};
+  arr.forEach(function(i){m[i[k]]=(m[i[k]]||0)+1;});
+  return m;
+}
+function toast(msg,type){
+  var el=document.getElementById('troot');
+  var cls=type==='err'?'terr':'tok';
+  el.innerHTML='<div class="toast '+cls+'">'+esc(msg)+'</div>';
+  setTimeout(function(){el.innerHTML='';},2800);
+}
+function uid(){return'H'+Date.now();}
+
+/* ============================================================
+   NAVEGACIÓN
+============================================================ */
+function renderNav(){
+  var html='';
+  NAV.forEach(function(n){
+    html+='<div class="ni'+(ST.tab===n.id?' on':'')+'" onclick="goTab(\''+n.id+'\')">'+
+      '<span>'+n.ico+'</span><span>'+n.lbl+'</span></div>';
+  });
+  document.getElementById('nav').innerHTML=html;
+}
+function goTab(t){
+  ST.tab=t;ST.sbOpen=false;
+  document.getElementById('sb').classList.remove('open');
+  removeSbDrop();
+  renderAll();
+}
+function toggleSb(){
+  ST.sbOpen=!ST.sbOpen;
+  document.getElementById('sb').classList.toggle('open',ST.sbOpen);
+  if(ST.sbOpen){
+    var bd=document.createElement('div');
+    bd.className='sbdrop';bd.id='sbdrop';
+    bd.onclick=function(){ST.sbOpen=false;document.getElementById('sb').classList.remove('open');removeSbDrop();};
+    document.body.appendChild(bd);
+  }else{removeSbDrop();}
+}
+function removeSbDrop(){var b=document.getElementById('sbdrop');if(b)b.remove();}
+
+/* ============================================================
+   TOPBAR
+============================================================ */
+function renderTopbar(){
+  var titles={dashboard:'📊 Dashboard',findings:'📋 Hallazgos SST',about:'ℹ️ Acerca de'};
+  document.getElementById('ptitle').textContent=titles[ST.tab]||'Portal SST';
+  document.getElementById('tbact').innerHTML=
+    ST.tab==='findings'?'<button class="btn bp bsm" onclick="openAdd()">＋ Nuevo Hallazgo</button>':'';
+}
+
+/* ============================================================
+   DASHBOARD
+============================================================ */
+function renderDashboard(){
+  var f=ST.findings;
+  var open=0,prog=0,done=0,crit=0;
+  f.forEach(function(x){
+    if(x.status==='Open')open++;
+    else if(x.status==='In Progress')prog++;
+    else done++;
+    if(x.priority==='RI')crit++;
+  });
+  var byF=groupBy(f,'riskFactor');
+  var maxF=1;
+  Object.values(byF).forEach(function(v){if(v>maxF)maxF=v;});
+  var barsH='';
+  Object.entries(byF).forEach(function(e,i){
+    var h=Math.round((e[1]/maxF)*120)+10;
+    barsH+='<div class="bg">'+
+      '<span class="bval">'+e[1]+'</span>'+
+      '<div class="bbar" style="height:'+h+'px;background:'+BCOLORS[i%BCOLORS.length]+'" title="'+esc(e[0])+': '+e[1]+'"></div>'+
+      '<span class="blbl" title="'+esc(e[0])+'">'+esc(e[0].substring(0,9))+'</span>'+
+      '</div>';
+  });
+  if(!barsH)barsH='<p style="color:var(--mut);font-size:13px">Sin datos</p>';
+
+  var byP={RI:0,RII:0,RIII:0,RIV:0};
+  f.forEach(function(x){if(byP[x.priority]!==undefined)byP[x.priority]++;});
+  var total=f.length||1;
+  var pieH='';
+  Object.entries(byP).forEach(function(e){
+    pieH+='<div class="prow"><div class="pdot" style="background:'+PCOLS[e[0]]+'"></div>'+
+      '<span class="pname">'+PLBLS[e[0]]+'</span><span class="pnum">'+e[1]+'</span></div>';
+  });
+  var segH='';
+  Object.entries(byP).forEach(function(e){
+    if(e[1]>0){
+      var pct=Math.round((e[1]/total)*100);
+      segH+='<div class="pbar-seg" style="flex:'+e[1]+';background:'+PCOLS[e[0]]+'" title="'+PLBLS[e[0]]+': '+e[1]+'"></div>';
+    }
+  });
+
+  var critBanner=crit>0?
+    '<div class="ale-crit">⚠️ '+crit+' hallazgo'+(crit>1?'s':'')+' R-I (Alto) requiere'+(crit>1?'n':'')+' atención inmediata.</div>':'';
+
+  document.getElementById('content').innerHTML=
+    critBanner+
+    '<div class="sgrid">'+
+      '<div class="card"><div class="slbl">Total</div><div class="sval">'+f.length+'</div></div>'+
+      '<div class="card"><div class="slbl">Abiertos</div><div class="sval" style="color:var(--red)">'+open+'</div></div>'+
+      '<div class="card"><div class="slbl">En Proceso</div><div class="sval" style="color:var(--amb)">'+prog+'</div></div>'+
+      '<div class="card"><div class="slbl">Ejecutados</div><div class="sval" style="color:var(--green)">'+done+'</div></div>'+
+    '</div>'+
+    '<div class="cgrid">'+
+      '<div class="card"><div class="ctitle">📊 Por Factor de Riesgo</div><div class="barchart">'+barsH+'</div></div>'+
+      '<div class="card"><div class="ctitle">🎯 Por Nivel de Riesgo GTC 45</div>'+
+        '<div class="plgd">'+pieH+'</div>'+
+        (segH?'<div class="pbar-wrap">'+segH+'</div>':'')+
+      '</div>'+
+    '</div>';
+}
+
+/* ============================================================
+   FINDINGS TABLE
+============================================================ */
+function filteredF(){
+  var q=ST.search.toLowerCase();
+  return ST.findings.filter(function(f){
+    var match=!q||[f.id,f.area,f.riskFactor,f.department,f.description,f.riskDetail]
+      .some(function(v){return String(v||'').toLowerCase().indexOf(q)>=0;});
+    return match&&(!ST.fStatus||f.status===ST.fStatus)&&(!ST.fPriority||f.priority===ST.fPriority);
+  });
+}
+
+function renderFindings(){
+  var f=filteredF();
+  var rows='';
+  if(f.length===0){
+    rows='<tr><td colspan="8"><div class="empty"><div class="eico">📭</div>'+
+      '<h3>Sin hallazgos</h3><p>Ajusta los filtros o registra uno nuevo.</p></div></td></tr>';
+  }else{
+    f.forEach(function(x){
+      rows+='<tr onclick="openDetail(\''+x.id+'\')">'+
+        '<td><span class="mono" style="font-size:12px;font-weight:700">'+esc(x.id)+'</span></td>'+
+        '<td style="font-size:12.5px">'+esc(x.date)+'</td>'+
+        '<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px" title="'+esc(x.area)+'">'+esc(x.area||'–')+'</td>'+
+        '<td><div style="font-weight:600;font-size:13px">'+esc(x.riskFactor)+'</div><div style="font-size:11px;color:var(--mut)">'+esc(x.riskDetail)+'</div></td>'+
+        '<td style="font-size:12.5px">'+esc(x.department)+'</td>'+
+        '<td>'+pbadge(x.priority)+'</td>'+
+        '<td>'+sbadge(x.status)+'</td>'+
+        '<td onclick="event.stopPropagation()">'+
+          '<div class="acts">'+
+            '<button class="btn bo bsm" onclick="openEdit(\''+x.id+'\')" title="Editar">✏️</button>'+
+            '<button class="btn bsm" style="color:var(--red);border:1.5px solid #fca5a5" onclick="delF(\''+x.id+'\')" title="Eliminar">🗑️</button>'+
+          '</div>'+
+        '</td>'+
+      '</tr>';
+    });
+  }
+
+  document.getElementById('content').innerHTML=
+    '<div class="twrap">'+
+      '<div class="tbar">'+
+        '<div class="sw"><span class="sico">🔍</span>'+
+          '<input placeholder="Buscar hallazgos…" value="'+esc(ST.search)+'" oninput="ST.search=this.value;renderFindings()" id="tsearch"/>'+
+        '</div>'+
+        '<select class="fil" onchange="ST.fStatus=this.value;renderFindings()">'+
+          '<option value="">Todos los estados</option>'+
+          '<option value="Open"'+(ST.fStatus==='Open'?' selected':'')+'>Abiertos</option>'+
+          '<option value="In Progress"'+(ST.fStatus==='In Progress'?' selected':'')+'>En Proceso</option>'+
+          '<option value="Completed"'+(ST.fStatus==='Completed'?' selected':'')+'>Ejecutados</option>'+
+        '</select>'+
+        '<select class="fil" onchange="ST.fPriority=this.value;renderFindings()">'+
+          '<option value="">Toda prioridad</option>'+
+          '<option value="RI"'+(ST.fPriority==='RI'?' selected':'')+'>R-I Alto</option>'+
+          '<option value="RII"'+(ST.fPriority==='RII'?' selected':'')+'>R-II Medio</option>'+
+          '<option value="RIII"'+(ST.fPriority==='RIII'?' selected':'')+'>R-III Bajo</option>'+
+          '<option value="RIV"'+(ST.fPriority==='RIV'?' selected':'')+'>R-IV Mínimo</option>'+
+        '</select>'+
+        '<button class="btn bo bsm" onclick="doExport()">📥 Excel</button>'+
+        '<button class="btn bp" onclick="openAdd()">＋ Nuevo</button>'+
+      '</div>'+
+      '<div style="overflow-x:auto">'+
+        '<table><thead><tr>'+
+          '<th>ID</th><th>Fecha</th><th>Área</th><th>Factor de Riesgo</th>'+
+          '<th>Dpto.</th><th>Prioridad</th><th>Estado</th><th></th>'+
+        '</tr></thead><tbody>'+rows+'</tbody></table>'+
+      '</div>'+
+      '<div style="padding:9px 16px;font-size:12px;color:var(--mut);text-align:right">'+
+        f.length+' de '+ST.findings.length+' hallazgos'+
+      '</div>'+
+    '</div>';
+}
+
+/* ============================================================
+   ABOUT
+============================================================ */
+function renderAbout(){
+  document.getElementById('content').innerHTML=
+    '<div class="acard">'+
+      '<h3 style="font-size:15px;font-weight:800;margin-bottom:12px">🛡️ Portal SST – GTC 45</h3>'+
+      '<p style="font-size:13.5px;color:var(--mut);line-height:1.75;margin-bottom:16px">'+
+        'Herramienta para registrar, analizar y gestionar hallazgos de inspección de '+
+        'Seguridad y Salud en el Trabajo según la metodología colombiana <strong>GTC 45</strong>.<br><br>'+
+        'La <strong>IA (Claude de Anthropic)</strong> analiza fotografías y completa automáticamente '+
+        'el factor de riesgo, probabilidad, consecuencia, intervención y acción correctiva.<br><br>'+
+        'Todos los datos se guardan en tu navegador (sin servidor externo).'+
+      '</p>'+
+      '<div class="info-box">'+
+        '<strong>Niveles de Riesgo GTC 45</strong><br>'+
+        'R-I (≥ 600 pts): Acción inmediata &nbsp;·&nbsp; R-II (150–599): Corrección urgente<br>'+
+        'R-III (40–149): Mantener controles &nbsp;·&nbsp; R-IV (&lt; 40): Revisión periódica<br><br>'+
+        '<strong>Puntaje</strong> = Probabilidad × Consecuencia (tablas GTC 45)'+
+      '</div>'+
+      '<p style="margin-top:14px;font-size:12px;color:var(--mut)">'+
+        'Para usar el análisis IA, ingresa tu clave Claude en el formulario de nuevo hallazgo.<br>'+
+        'Obtén tu clave gratis en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>'+
+      '</p>'+
+    '</div>';
+}
+
+/* ============================================================
+   FORM DATA & MODAL STATE
+============================================================ */
+var FD={};   // form data
+var EID=null; // editing id
+var AIF=[];   // ai-filled fields
+var BUSY=false;
+
+function defaultFD(){
+  return{
+    date:today(),time:nowTime(),city:'Bogotá',area:'',
+    department:DEPS[0],responsible:'Responsable SST',
+    riskFactor:'Seguridad',riskDetail:SUBS['Seguridad'][0],
+    probabilityLevel:'Medio',consequenceLevel:'Leve',
+    intervention:'Controles Administrativos',
+    description:'',action:'',status:'Open',
+    complianceDate:daysPlus(15),imageUrl:''
+  };
+}
+
+function openAdd(){EID=null;FD=defaultFD();AIF=[];showModal();}
+function openEdit(id){
+  var f=ST.findings.find(function(x){return x.id===id;});
+  if(!f)return;
+  EID=id;FD=Object.assign({},f);AIF=[];showModal();
+}
+
+/* ============================================================
+   RENDER MODAL FORM
+============================================================ */
+function showModal(){
+  var subs=SUBS[FD.riskFactor]||[];
+  var subOpts=subs.map(function(s){
+    return'<option value="'+esc(s)+'"'+(FD.riskDetail===s?' selected':'')+'>'+esc(s)+'</option>';
+  }).join('');
+  // If riskDetail not in current subs (e.g. from AI), add it
+  if(FD.riskDetail&&subs.indexOf(FD.riskDetail)<0){
+    subOpts='<option value="'+esc(FD.riskDetail)+'" selected>'+esc(FD.riskDetail)+'</option>'+subOpts;
+  }
+
+  var keyVal=esc(getKey());
+  var hasPic=!!FD.imageUrl;
+  var picHTML=hasPic?
+    '<img id="iprev" class="iprev" src="'+FD.imageUrl+'" alt="Evidencia"/>':
+    '<div id="iph"><div style="font-size:26px;margin-bottom:5px">📷</div><p><strong>Haz clic o arrastra</strong> una foto JPG/PNG</p></div>';
+
+  var aifSet={}; AIF.forEach(function(k){aifSet[k]=true;});
+  function aif(k){return aifSet[k]?' aif':'';}
+
+  var html=
+    '<div class="ov" id="mov" onclick="ovClose(event)">'+
+    '<div class="modal">'+
+      '<div class="mhd">'+
+        '<div><h3>'+(EID?'Editar Hallazgo':'Nuevo Hallazgo SST')+'</h3>'+
+        '<p>Sube foto → IA autocompleta campos según GTC 45</p></div>'+
+        '<button class="xbtn" onclick="closeModal()">✕</button>'+
+      '</div>'+
+      '<div class="mbody" id="mbody">'+
+
+        // ERROR AREA
+        '<div id="ferr" style="display:none"></div>'+
+
+        // API KEY (inline, collapsible)
+        '<div class="keybox" id="keybox">'+
+          '<label>🔑 Clave API Claude (solo para análisis IA)</label>'+
+          '<input type="password" id="keyinp" placeholder="sk-ant-…" value="'+keyVal+'"/>'+
+          '<p>Se guarda en tu navegador. Obtén una gratis en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>'+
+          (keyVal?' &nbsp;<span style="color:var(--green);font-weight:700">✓ Guardada</span>':'')+'</p>'+
+        '</div>'+
+
+        // IMAGEN
+        '<div class="fg">'+
+          '<label>Evidencia fotográfica (JPG/PNG · máx 5 MB)</label>'+
+          '<div class="idrop" id="idrop">'+
+            '<input type="file" accept="image/*" onchange="handleImg(this)"/>'+
+            picHTML+
+          '</div>'+
+        '</div>'+
+
+        // BOTÓN IA
+        '<button class="btn bp" id="aibtn" onclick="runAI()" style="width:100%;justify-content:center"'+(hasPic?'':' disabled')+'>'+
+          '🤖 Analizar con Claude AI (GTC 45)'+
+        '</button>'+
+        '<div id="aires"></div>'+
+
+        // FORM GRID
+        '<div class="fgrid">'+
+          '<div class="fg"><label>Fecha</label><input type="date" id="fi-date" value="'+esc(FD.date)+'"/></div>'+
+          '<div class="fg"><label>Hora</label><input type="time" id="fi-time" value="'+esc(FD.time)+'"/></div>'+
+          '<div class="fg"><label>Ciudad</label><input id="fi-city" value="'+esc(FD.city)+'" placeholder="Bogotá"/></div>'+
+          '<div class="fg"><label>Área / Ubicación</label><input id="fi-area" value="'+esc(FD.area)+'" placeholder="Bodega 6, Piso 2…"/></div>'+
+          '<div class="fg"><label>Departamento</label><select id="fi-dep">'+
+            DEPS.map(function(d){return'<option'+(FD.department===d?' selected':'')+'>'+esc(d)+'</option>';}).join('')+
+          '</select></div>'+
+          '<div class="fg"><label>Responsable</label><input id="fi-resp" value="'+esc(FD.responsible)+'"/></div>'+
+
+          '<div class="fg"><label>Factor de Riesgo (GTC 45)</label>'+
+            '<select id="fi-rf" onchange="changeRisk(this.value)" class="'+aif('riskFactor')+'">'+
+              RFACTORS.map(function(r){return'<option'+(FD.riskFactor===r?' selected':'')+'>'+esc(r)+'</option>';}).join('')+
+            '</select></div>'+
+          '<div class="fg"><label>Detalle / Subtipo</label>'+
+            '<select id="fi-rd" class="'+aif('riskDetail')+'">'+subOpts+'</select></div>'+
+
+          '<div class="fg full"><label>Descripción del hallazgo *</label>'+
+            '<textarea id="fi-desc" class="'+aif('description')+'">'+esc(FD.description)+'</textarea></div>'+
+
+          '<div class="fg"><label>Nivel de Probabilidad</label>'+
+            '<select id="fi-prob" onchange="updBadge()" class="'+aif('probabilityLevel')+'">'+
+              PROB.map(function(l){return'<option value="'+esc(l.v)+'"'+(FD.probabilityLevel===l.v?' selected':'')+'>'+esc(l.l)+'</option>';}).join('')+
+            '</select></div>'+
+          '<div class="fg"><label>Nivel de Consecuencia</label>'+
+            '<select id="fi-cons" onchange="updBadge()" class="'+aif('consequenceLevel')+'">'+
+              CONS.map(function(l){return'<option value="'+esc(l.v)+'"'+(FD.consequenceLevel===l.v?' selected':'')+'>'+esc(l.l)+'</option>';}).join('')+
+            '</select></div>'+
+
+          '<div class="fg"><label>Medida de Intervención</label>'+
+            '<select id="fi-int" class="'+aif('intervention')+'">'+
+              INTS.map(function(i){return'<option'+(FD.intervention===i?' selected':'')+'>'+esc(i)+'</option>';}).join('')+
+            '</select></div>'+
+          '<div class="fg"><label>Estado</label>'+
+            '<select id="fi-sta">'+
+              '<option value="Open"'+(FD.status==='Open'?' selected':'')+'>Abierto</option>'+
+              '<option value="In Progress"'+(FD.status==='In Progress'?' selected':'')+'>En Proceso</option>'+
+              '<option value="Completed"'+(FD.status==='Completed'?' selected':'')+'>Ejecutado</option>'+
+            '</select></div>'+
+
+          '<div class="fg full"><label>Acción correctiva</label>'+
+            '<textarea id="fi-act" class="'+aif('action')+'">'+esc(FD.action)+'</textarea></div>'+
+
+          '<div class="fg"><label>Fecha de cumplimiento</label>'+
+            '<input type="date" id="fi-comp" value="'+esc(FD.complianceDate)+'"/></div>'+
+          '<div class="fg"><label>Nivel de Riesgo (automático)</label>'+
+            '<div id="pribadge" style="padding:8px 11px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:8px">'+
+              pbadge(calcPri(FD.probabilityLevel,FD.consequenceLevel))+
+            '</div></div>'+
+        '</div>'+ // end fgrid
+
+      '</div>'+ // end mbody
+      '<div class="mft">'+
+        '<button class="btn bo" onclick="closeModal()">Cancelar</button>'+
+        '<button class="btn bp" onclick="saveF2()">✓ '+(EID?'Guardar cambios':'Registrar Hallazgo')+'</button>'+
+      '</div>'+
+    '</div></div>';
+
+  document.getElementById('mroot').innerHTML=html;
+}
+
+function changeRisk(val){
+  var subs=SUBS[val]||[];
+  var sel=document.getElementById('fi-rd');
+  if(sel){
+    sel.innerHTML=subs.map(function(s){return'<option>'+esc(s)+'</option>';}).join('');
+  }
+}
+
+function updBadge(){
+  var p=getV('fi-prob');var c=getV('fi-cons');
+  var wrap=document.getElementById('pribadge');
+  if(wrap)wrap.innerHTML=pbadge(calcPri(p,c));
+}
+
+function getV(id){var el=document.getElementById(id);return el?el.value:'';}
+
+function showErr(msg){
+  var el=document.getElementById('ferr');
+  if(!el)return;
+  el.style.display='block';
+  el.innerHTML='<div class="ale ale-e">⚠️ '+esc(msg)+'</div>';
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function clearErr(){var el=document.getElementById('ferr');if(el)el.style.display='none';}
+
+/* ============================================================
+   IMAGE HANDLER
+============================================================ */
+function handleImg(input){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(file.size>5*1024*1024){showErr('La imagen no debe superar 5 MB.');return;}
+  if(file.type.indexOf('image/')<0){showErr('Solo se permiten imágenes JPG o PNG.');return;}
+  var reader=new FileReader();
+  reader.onloadend=function(){
+    FD.imageUrl=reader.result;
+    var ph=document.getElementById('iph');if(ph)ph.remove();
+    var prev=document.getElementById('iprev');
+    if(!prev){
+      prev=document.createElement('img');
+      prev.id='iprev';prev.className='iprev';
+      var drop=document.getElementById('idrop');
+      if(drop)drop.appendChild(prev);
+    }
+    prev.src=reader.result;
+    var btn=document.getElementById('aibtn');
+    if(btn)btn.disabled=false;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ============================================================
+   AI ANALYSIS
+============================================================ */
+function runAI(){
+  if(!FD.imageUrl){showErr('Primero sube una imagen.');return;}
+  if(BUSY)return;
+
+  // Save key from input
+  var keyInp=document.getElementById('keyinp');
+  var key=keyInp?keyInp.value.trim():getKey();
+  if(!key){
+    showErr('Ingresa tu clave API Claude en el campo de arriba (sk-ant-…).');
+    if(keyInp)keyInp.focus();
+    return;
+  }
+  setKey(key);
+  clearErr();
+  BUSY=true;
+
+  var btn=document.getElementById('aibtn');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="sp"></span> Analizando imagen…';}
+  var res=document.getElementById('aires');
+  if(res)res.innerHTML='';
+
+  var b64=FD.imageUrl.replace(/^data:image\/\w+;base64,/,'');
+  var mimeM=FD.imageUrl.match(/^data:(image\/\w+);base64,/);
+  var mime=mimeM?mimeM[1]:'image/jpeg';
+
+  var prompt='Eres experto en SST colombiana. Analiza esta imagen de inspección de seguridad según GTC 45.\n'+
+    'Responde ÚNICAMENTE con JSON válido sin texto adicional:\n'+
+    '{"riskFactor":"<Biomecánico|Psicosocial|Físico|Químico|Biológico|Seguridad|Fenómenos Naturales>",'+
+    '"riskDetail":"<subcategoría específica GTC 45>",'+
+    '"description":"<descripción profesional del hallazgo en máximo 2 oraciones>",'+
+    '"probabilityLevel":"<Muy Alto|Alto|Medio|Bajo>",'+
+    '"consequenceLevel":"<Catastrófico|Peligroso|Leve|Marginal>",'+
+    '"intervention":"<Eliminación|Sustitución|Controles Ingeniería|Controles Administrativos|EPP>",'+
+    '"action":"<acción correctiva específica en máximo 2 oraciones>"}';
+
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':key,
+      'anthropic-version':'2023-06-01'
+    },
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:mime,data:b64}},
+        {type:'text',text:prompt}
+      ]}]
+    })
+  })
+  .then(function(r){
+    if(!r.ok){
+      return r.json().then(function(e){
+        throw new Error(e&&e.error&&e.error.message?e.error.message:'Error HTTP '+r.status);
+      });
+    }
+    return r.json();
+  })
+  .then(function(d){
+    var text=(d.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
+    var clean=text.replace(/```json|```/g,'').trim();
+    var data=JSON.parse(clean);
+    AIF=[];
+    var fields=['riskFactor','riskDetail','description','probabilityLevel','consequenceLevel','intervention','action'];
+    fields.forEach(function(k){if(data[k]){FD[k]=data[k];AIF.push(k);}});
+    showModal(); // re-render with filled values
+    var res2=document.getElementById('aires');
+    if(res2)res2.innerHTML='<div class="aibox" style="margin-top:2px"><div class="aibox-t">✅ IA completó '+AIF.length+' campos automáticamente</div><p>Revisa y ajusta antes de guardar.</p></div>';
+  })
+  .catch(function(e){
+    showErr('Error de análisis IA: '+e.message);
+    var btn2=document.getElementById('aibtn');
+    if(btn2){btn2.disabled=false;btn2.innerHTML='🤖 Analizar con Claude AI (GTC 45)';}
+  })
+  .finally(function(){BUSY=false;});
+}
+
+/* ============================================================
+   SAVE FINDING
+============================================================ */
+function saveF2(){
+  // Collect all form values
+  var get=function(id){var el=document.getElementById(id);return el?el.value.trim():'';};
+  FD.date=get('fi-date');
+  FD.time=get('fi-time');
+  FD.city=get('fi-city');
+  FD.area=get('fi-area');
+  FD.department=get('fi-dep');
+  FD.responsible=get('fi-resp');
+  FD.riskFactor=get('fi-rf');
+  FD.riskDetail=get('fi-rd');
+  FD.description=get('fi-desc');
+  FD.probabilityLevel=get('fi-prob');
+  FD.consequenceLevel=get('fi-cons');
+  FD.intervention=get('fi-int');
+  FD.status=get('fi-sta');
+  FD.action=get('fi-act');
+  FD.complianceDate=get('fi-comp');
+
+  // Save key if entered
+  var ki=document.getElementById('keyinp');
+  if(ki&&ki.value.trim())setKey(ki.value.trim());
+
+  if(!FD.description){showErr('La descripción del hallazgo es obligatoria.');return;}
+  if(!FD.area){showErr('El área / ubicación es obligatoria.');return;}
+
+  FD.priority=calcPri(FD.probabilityLevel,FD.consequenceLevel);
+
+  if(EID){
+    FD.id=EID;
+    ST.findings=ST.findings.map(function(f){return f.id===EID?Object.assign({},FD):f;});
+    toast('Hallazgo actualizado correctamente');
+  }else{
+    FD.id=uid();
+    ST.findings=ST.findings.concat([Object.assign({},FD)]);
+    toast('Hallazgo registrado correctamente');
+  }
+  saveF();
+  closeModal();
+  renderAll();
+}
+
+/* ============================================================
+   CLOSE MODAL
+============================================================ */
+function closeModal(){document.getElementById('mroot').innerHTML='';}
+function ovClose(e){if(e.target&&e.target.id==='mov')closeModal();}
+
+/* ============================================================
+   DETAIL MODAL
+============================================================ */
+function openDetail(id){
+  var f=ST.findings.find(function(x){return x.id===id;});
+  if(!f)return;
+  var html=
+    '<div class="ov" id="mov" onclick="ovClose(event)">'+
+    '<div class="modal">'+
+      '<div class="mhd">'+
+        '<div>'+
+          '<div style="display:flex;gap:7px;margin-bottom:8px">'+pbadge(f.priority)+' '+sbadge(f.status)+'</div>'+
+          '<h3>'+esc(f.riskFactor)+' – '+esc(f.riskDetail)+'</h3>'+
+          '<p style="font-size:12.5px;color:var(--mut);margin-top:3px">'+esc(f.city)+' · '+esc(f.area)+' · '+esc(f.date)+' '+esc(f.time)+'</p>'+
+        '</div>'+
+        '<button class="xbtn" onclick="closeModal()">✕</button>'+
+      '</div>'+
+      '<div class="mbody">'+
+        (f.imageUrl?'<div style="border-radius:10px;overflow:hidden;border:1px solid var(--bord)">'+
+          '<img src="'+f.imageUrl+'" style="width:100%;max-height:200px;object-fit:cover" alt="Evidencia"/></div>':'')+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'+
+          '<div class="dp"><span class="dl">Departamento</span><span class="dv">'+esc(f.department)+'</span></div>'+
+          '<div class="dp"><span class="dl">Responsable</span><span class="dv">'+esc(f.responsible)+'</span></div>'+
+          '<div class="dp"><span class="dl">Probabilidad</span><span class="dv">'+esc(f.probabilityLevel)+'</span></div>'+
+          '<div class="dp"><span class="dl">Consecuencia</span><span class="dv">'+esc(f.consequenceLevel)+'</span></div>'+
+          '<div class="dp"><span class="dl">Intervención</span><span class="dv">'+esc(f.intervention)+'</span></div>'+
+          '<div class="dp"><span class="dl">F. Cumplimiento</span><span class="dv" style="color:var(--red)">'+esc(f.complianceDate)+'</span></div>'+
+        '</div>'+
+        '<div class="dp"><span class="dl">Descripción</span><p style="font-size:13.5px;line-height:1.6;margin-top:4px">'+esc(f.description)+'</p></div>'+
+        '<div class="actbox"><div class="al">✓ Acción Correctiva</div><p>'+esc(f.action)+'</p></div>'+
+      '</div>'+
+      '<div class="mft">'+
+        '<button class="btn bsm" style="color:var(--red);border:1.5px solid #fca5a5" onclick="delF(\''+f.id+'\');closeModal()">🗑️ Eliminar</button>'+
+        '<button class="btn bo bsm" onclick="shareF(\''+f.id+'\')">↗ Compartir</button>'+
+        '<button class="btn bo bsm" onclick="closeModal();openEdit(\''+f.id+'\')">✏️ Editar</button>'+
+        '<button class="btn bp bsm" onclick="closeModal()">Cerrar</button>'+
+      '</div>'+
+    '</div></div>';
+  document.getElementById('mroot').innerHTML=html;
+}
+
+function delF(id){
+  if(!confirm('¿Eliminar este hallazgo?'))return;
+  ST.findings=ST.findings.filter(function(f){return f.id!==id;});
+  saveF();toast('Hallazgo eliminado','err');renderAll();
+}
+function shareF(id){
+  var f=ST.findings.find(function(x){return x.id===id;});if(!f)return;
+  var txt='Hallazgo '+f.id+': '+f.riskFactor+'\nÁrea: '+f.city+' – '+f.area+'\nDescripción: '+f.description+'\nAcción: '+f.action;
+  if(navigator.share){navigator.share({title:'Hallazgo SST',text:txt}).catch(function(){});}
+  else if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){toast('Copiado al portapapeles');});}
+}
+
+/* ============================================================
+   EXPORT EXCEL
+============================================================ */
+var xlsxLoaded=false;
+function doExport(){
+  if(xlsxLoaded){doXLSX();return;}
+  var s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload=function(){xlsxLoaded=true;doXLSX();};
+  s.onerror=function(){toast('No se pudo cargar xlsx','err');};
+  document.head.appendChild(s);
+}
+function doXLSX(){
+  var rows=ST.findings.map(function(f){
+    return{
+      ID:f.id,Fecha:f.date,Hora:f.time,Ciudad:f.city,'Área':f.area,
+      Departamento:f.department,Responsable:f.responsible,
+      'Factor de Riesgo':f.riskFactor,'Detalle Riesgo':f.riskDetail,
+      'Descripción':f.description,'Nivel Probabilidad':f.probabilityLevel,
+      'Nivel Consecuencia':f.consequenceLevel,'Nivel de Riesgo':f.priority,
+      'Intervención':f.intervention,'Acción Correctiva':f.action,
+      'Fecha Cumplimiento':f.complianceDate,Estado:f.status
+    };
+  });
+  var ws=XLSX.utils.json_to_sheet(rows);
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Hallazgos',ws);
+  XLSX.writeFile(wb,'Hallazgos_SST_'+today()+'.xlsx');
+  toast('Excel exportado correctamente');
+}
+
+/* ============================================================
+   RENDER ALL
+============================================================ */
+function renderAll(){
+  renderNav();
+  renderTopbar();
+  if(ST.tab==='dashboard')renderDashboard();
+  else if(ST.tab==='findings')renderFindings();
+  else if(ST.tab==='about')renderAbout();
+}
+
+// INIT
+renderAll();
+</script>
+</body>
+</html>
