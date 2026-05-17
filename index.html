@@ -634,9 +634,8 @@ function showModal(){
 
         // API KEY (inline, collapsible)
         '<div class="keybox" id="keybox">'+
-          '<label>🔑 Clave API Claude (solo para análisis IA)</label>'+
-          '<input type="password" id="keyinp" placeholder="sk-ant-…" value="'+keyVal+'"/>'+
-          '<p>Se guarda en tu navegador. Obtén una gratis en <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>'+
+          '<label>🔑 ASISTENTE IA EXTERNO (DEMO)</label>'+
+          '<p>No requiere API. Usa ChatGPT o Google AI Studio y pega el resultado. target="_blank">console.anthropic.com</a>'+
           (keyVal?' &nbsp;<span style="color:var(--green);font-weight:700">✓ Guardada</span>':'')+'</p>'+
         '</div>'+
 
@@ -651,7 +650,7 @@ function showModal(){
 
         // BOTÓN IA
         '<button class="btn bp" id="aibtn" onclick="runAI()" style="width:100%;justify-content:center"'+(hasPic?'':' disabled')+'>'+
-          '🤖 Analizar con Claude AI (GTC 45)'+
+          '🤖 Analizar con IA externa (GTC 45)'+
         '</button>'+
         '<div id="aires"></div>'+
 
@@ -773,80 +772,62 @@ function handleImg(input){
 ============================================================ */
 function runAI(){
   if(!FD.imageUrl){showErr('Primero sube una imagen.');return;}
-  if(BUSY)return;
-
-  // Save key from input
-  var keyInp=document.getElementById('keyinp');
-  var key=keyInp?keyInp.value.trim():getKey();
-  if(!key){
-    showErr('Ingresa tu clave API Claude en el campo de arriba (sk-ant-…).');
-    if(keyInp)keyInp.focus();
-    return;
-  }
-  setKey(key);
   clearErr();
-  BUSY=true;
+  const prompt=`Analiza esta evidencia según GTC 45 Colombia y devuelve JSON con: riskFactor, riskDetail, description, probabilityLevel, consequenceLevel, intervention, action.`;
+  const texto = prompt + '\n\n1. Abre ChatGPT o Google AI Studio.\n2. Sube la imagen.\n3. Pega este prompt.\n4. Copia el JSON devuelto y pégalo abajo.';
+  const box = document.getElementById('aires');
+  box.innerHTML = `
+    <div class="aibox">
+      <div class="aibox-t">Asistente IA externo</div>
+      <textarea id="iaPastePrompt" style="width:100%;min-height:120px">${prompt}</textarea>
+      <textarea id="iaPasteResult" placeholder="Pega aquí la respuesta JSON de la IA" style="width:100%;min-height:160px;margin-top:8px"></textarea>
+      <button class="btn bp" onclick="applyExternalAI()" style="margin-top:8px">Aplicar respuesta IA</button>
+    </div>`;
+}
+function applyExternalAI(){
+  try{
+    const raw=document.getElementById('iaPasteResult').value.trim();
 
-  var btn=document.getElementById('aibtn');
-  if(btn){btn.disabled=true;btn.innerHTML='<span class="sp"></span> Analizando imagen…';}
-  var res=document.getElementById('aires');
-  if(res)res.innerHTML='';
+    let data;
 
-  var b64=FD.imageUrl.replace(/^data:image\/\w+;base64,/,'');
-  var mimeM=FD.imageUrl.match(/^data:(image\/\w+);base64,/);
-  var mime=mimeM?mimeM[1]:'image/jpeg';
+    try{
+      data=JSON.parse(raw);
+    }catch(e){
+      data={};
 
-  var prompt='Eres experto en SST colombiana. Analiza esta imagen de inspección de seguridad según GTC 45.\n'+
-    'Responde ÚNICAMENTE con JSON válido sin texto adicional:\n'+
-    '{"riskFactor":"<Biomecánico|Psicosocial|Físico|Químico|Biológico|Seguridad|Fenómenos Naturales>",'+
-    '"riskDetail":"<subcategoría específica GTC 45>",'+
-    '"description":"<descripción profesional del hallazgo en máximo 2 oraciones>",'+
-    '"probabilityLevel":"<Muy Alto|Alto|Medio|Bajo>",'+
-    '"consequenceLevel":"<Catastrófico|Peligroso|Leve|Marginal>",'+
-    '"intervention":"<Eliminación|Sustitución|Controles Ingeniería|Controles Administrativos|EPP>",'+
-    '"action":"<acción correctiva específica en máximo 2 oraciones>"}';
+      const get=(label)=>{
+        const r=new RegExp(label+'\\s*[:\\-]\\s*(.+)','i');
+        const m=raw.match(r);
+        return m?m[1].split('\\n')[0].trim():'';
+      };
 
-  fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key':key,
-      'anthropic-version':'2023-06-01'
-    },
-    body:JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:1000,
-      messages:[{role:'user',content:[
-        {type:'image',source:{type:'base64',media_type:mime,data:b64}},
-        {type:'text',text:prompt}
-      ]}]
-    })
-  })
-  .then(function(r){
-    if(!r.ok){
-      return r.json().then(function(e){
-        throw new Error(e&&e.error&&e.error.message?e.error.message:'Error HTTP '+r.status);
-      });
+      data.riskFactor=get('factor de riesgo');
+      data.riskDetail=get('detalle');
+      data.description=get('descripción');
+      data.probabilityLevel=get('probabilidad');
+      data.consequenceLevel=get('consecuencia');
+      data.intervention=get('intervención');
+      data.action=get('acción');
     }
-    return r.json();
-  })
-  .then(function(d){
-    var text=(d.content||[]).filter(function(b){return b.type==='text';}).map(function(b){return b.text;}).join('');
-    var clean=text.replace(/```json|```/g,'').trim();
-    var data=JSON.parse(clean);
+
     AIF=[];
-    var fields=['riskFactor','riskDetail','description','probabilityLevel','consequenceLevel','intervention','action'];
-    fields.forEach(function(k){if(data[k]){FD[k]=data[k];AIF.push(k);}});
-    showModal(); // re-render with filled values
-    var res2=document.getElementById('aires');
-    if(res2)res2.innerHTML='<div class="aibox" style="margin-top:2px"><div class="aibox-t">✅ IA completó '+AIF.length+' campos automáticamente</div><p>Revisa y ajusta antes de guardar.</p></div>';
-  })
-  .catch(function(e){
-    showErr('Error de análisis IA: '+e.message);
-    var btn2=document.getElementById('aibtn');
-    if(btn2){btn2.disabled=false;btn2.innerHTML='🤖 Analizar con Claude AI (GTC 45)';}
-  })
-  .finally(function(){BUSY=false;});
+
+    ['riskFactor','riskDetail','description','probabilityLevel','consequenceLevel','intervention','action']
+    .forEach(k=>{
+      if(data[k]){
+        FD[k]=data[k];
+        AIF.push(k);
+      }
+    });
+
+    showModal();
+
+    const res2=document.getElementById('aires');
+    if(res2)res2.innerHTML='<div class=\"aibox\"><div class=\"aibox-t\">✓ Datos importados</div><p>Campos completados.</p></div>';
+
+  }catch(e){
+    showErr('No se pudo interpretar la respuesta IA.');
+  }
 }
 
 /* ============================================================
@@ -987,16 +968,42 @@ function doXLSX(){
 /* ============================================================
    RENDER ALL
 ============================================================ */
+// INIT
+renderAll();
+/* ============================================================
+   RENDER ALL
+============================================================ */
 function renderAll(){
   renderNav();
   renderTopbar();
-  if(ST.tab==='dashboard')renderDashboard();
-  else if(ST.tab==='findings')renderFindings();
-  else if(ST.tab==='about')renderAbout();
+  if(ST.tab==='dashboard') renderDashboard();
+  else if(ST.tab==='findings') renderFindings();
+  else if(ST.tab==='about') renderAbout();
 }
 
 // INIT
 renderAll();
 </script>
-</body>
-</html>
+
+<script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+
+<script>
+function exportWordFinding(id){
+  const f=ST.findings.find(x=>x.id===id); if(!f) return;
+  const { Document, Packer, Paragraph, TextRun } = docx;
+  const doc = new Document({ sections:[{ children:[
+    new Paragraph({children:[new TextRun({text:'INFORME DE INSPECCIÓN SST', bold:true, size:28})]}),
+    new Paragraph('Fecha: '+f.date),
+    new Paragraph('Área: '+f.area),
+    new Paragraph('Factor de Riesgo: '+f.riskFactor+' - '+f.riskDetail),
+    new Paragraph('Descripción: '+f.description),
+    new Paragraph('Acción de mejora: '+f.action)
+  ]}]});
+  Packer.toBlob(doc).then(blob=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='Informe_'+f.id+'.docx';
+    a.click();
+  });
+}
+</script>
